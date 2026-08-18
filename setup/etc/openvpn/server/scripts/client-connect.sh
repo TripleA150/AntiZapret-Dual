@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Блокируем IPv6 на клиенте, когда поддержка IPv6 выключена на сервере
+#noipv6#if [[ "$IV_PLAT" != 'linux' ]]; then
+#noipv6#	echo 'push "ifconfig-ipv6 fdea:dead::2/64 fdea:dead::1"
+#noipv6#push "route-ipv6 ::/3"
+#noipv6#push "route-ipv6 2000::/4"
+#noipv6#push "route-ipv6 3000::/4"
+#noipv6#push "route-ipv6 fc00::/7"
+#noipv6#push "block-ipv6"' >> "$1"
+#noipv6#fi
+
+exit 0

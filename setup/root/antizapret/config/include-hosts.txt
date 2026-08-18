@@ -1,0 +1,382 @@
+# Добавление доменов для маршрутизации через AntiZapret VPN
+#
+# Формат записи: example.com
+# Где:
+#   example.com - доменное имя в кодировке ASCII или Punycode
+#
+# Примеры записи:
+#   subdomain.example.com  - добавление домена третьего уровня subdomain.example.com и всех его поддоменов
+#   example.com            - добавление домена второго уровня example.com и всех его поддоменов
+#   com                    - добавление домена верхнего уровня com и всех его поддоменов
+#   xn--80aswg.xn--p1ai    - добавление домена второго уровня сайт.рф и всех его поддоменов (кодировка Punycode)
+#
+# Строки начинающиеся с # это комментарии и они не обрабатываются
+#
+
+
+# Общее
+alza.cz
+bestsecret.com
+bfsat.fr
+bigmama.network
+camirafabrics.com
+elektroshopwagner.de
+flightsimulator.com
+halooglasi.com
+maixhub.com
+mastil-boom.es
+mediafire.com
+mrclean.top
+nekretnine.rs
+sipeed.com
+vipcards.tv
+
+# CanalPlus
+canalplus.com
+canalplus.pro
+canalsat.fr
+
+# Facetime
+facetime-apple-com.we.apple-dns.net
+facetime.apple.com
+
+# SoundCloud
+sndcdn.com
+soundcloud.cloud
+soundcloud.com
+
+# Zona.plus (Android app)
+imgzona.video
+mzona.net
+
+# Macys
+borderfree.com
+macys.com
+macysassets.com
+
+# Покер
+gipsyteam.org
+gipsyteam.ru
+redstarpoker34.eu
+
+# Intim City
+intimcity.com
+intimcity.digital
+intimtur.com
+
+
+# Инд
+ai.studio
+aislpc.com
+ayntec.com
+braindancevr.com
+duolingo.com
+dxfuncluster.com
+dxheat.com
+dxwatch.com
+elevenlabs.io
+glsnxt.com
+lovable.dev
+monster-shara.net
+openboxfan.com
+plaud.ai
+vatsim.net
+xpilot-project.org
+
+# Не добавлять в списки
+dyndns.tv
+
+# Twitch
+ext-twitch.tv
+jtvnw.net
+live-video.net
+ttvnw.net
+twitch.tv
+twitchcdn.net
+twitchcon.com
+twitchsvc.net
+
+# Bohemia Interactive (Arma, DayZ, etc.)
+arma3.com
+armaplatform.com
+bistudio.com
+bohemia.net
+dayz.com
+makearmanotwar.com
+silicagame.com
+vigorgame.com
+ylands.com
+
+# WhatsApp + Facebook
+facebook.com
+fbsbx.com
+wa.me
+whatsapp-plus.info
+whatsapp-plus.me
+whatsapp-plus.net
+whatsapp.cc
+whatsapp.com
+whatsapp.info
+whatsapp.net
+whatsapp.org
+whatsapp.tv
+whatsappbrand.com
+
+# Telegram
+cdn-telegram.org
+comments.app
+contest.com
+fragment.com
+graph.org
+quiz.directory
+t.me
+tdesktop.com
+telega.one
+telegra.ph
+telegram-cdn.org
+telegram.dog
+telegram.me
+telegram.org
+telegram.space
+telesco.pe
+tg.dev
+ton.org
+toncenter.com
+tx.me
+usercontent.dev
+
+# Embark Studio
+arcraiders.com
+embark-studios.com
+embark.games
+reachthefinals.com
+
+# Origin
+dawngate.com
+eastore.com
+lordofultima.com
+origin.com
+origin.tv
+cloudsync-prod.s3.amazonaws.com
+origin-a.akamaihd.net
+rtm.tnt-ea.com
+ssl-lvlt.cdn.ea.com
+
+# EA
+awayoutgame.com
+battlefieldbadcompany2.com
+battlefront2.com
+battlefrontii.com
+bejewled-stars.com
+bejeweledstars.com
+capitalgames.com
+chillingo.com
+commandandconquer.com
+conquerwithcharacter.com
+crysis.jp
+dawngate.com
+dawngatechronicles.com
+dicela.com
+dicela.net
+ea-anz-press.com
+ea.com
+eaaccess.com
+eacashcard.com
+eacodigos.com
+eakorea.co.kr
+eamobile.com
+eanordic.com
+eaplay.com
+easports.com
+easports.jp
+easportsactive.com
+easportsactiveonline.com
+easportsfootball.com
+easportsfootballclub.com
+easportsmma.com
+easportsworld.com
+electronicarts.com
+electronicarts.fr
+futpromos.com
+futunited.com
+ghostgames.com
+heroesofdragonage.com
+hutpromos.com
+maddenchampionship.com
+maddenrewards.com
+maddenseason.info
+maddenseason.net
+maddenseason.org
+maxis.com
+mysimsracing.com
+play4free.com
+playapex.com
+pogo.com
+pogobeta.com
+popcap.com
+projectapex.com
+pvzheroes.com
+spearhead.kr
+speedhunters.com
+spore.com
+ssx3.com
+starwarsbattlefront.com
+starwarsbattlefront2.com
+tiberiumalliances.com
+tiburon.com
+tnt-ea.com
+ultimaforever.com
+unravel2.com
+unraveltwo.com
+visceralgames.com
+yogify.com
+
+# Anthem
+anthemgame.com
+anthemthegame.com
+
+# Apex Legends
+apexlegends.com
+projectapex.com
+
+# Battle Log / Battlefield
+battlefield.com
+battlefield1943.com
+battlefield3.com
+battlefield4.com
+battlefield5.com
+battlefieldheroes.com
+battlefieldv.com
+battlelog.com
+
+# Bioware
+bioware.com
+biowarestore.com
+
+# Broadsword
+eamythic.com
+eamythic.net
+
+# Command and Conquer
+cncrivals.com
+commandandconquer.com
+tiberiumalliances.com
+
+# Dark Age of Camelot
+camelot-europe.com
+camelotherald.com
+camelotherald.net
+daoc.net
+darkageofcamelot.com
+darkness-risen.com
+
+# Dead Space
+deadspacegame.com
+
+# DICE
+dice.se
+
+# Dragon Age
+dragonage.com
+dragonagekeep.com
+dragonagemovie.com
+thedreadwolfrises.com
+
+# Dungeon Keeper
+dungeonkeeper.cn
+dungeonkeeper.com
+dungeonkeeper.com.cn
+
+# FIFA
+eafootballworld.com
+fifastreet.com
+fifastreet3.com
+
+# Frost Bite
+frostbite.com
+
+# Industrial Toys
+industrialtoys.com
+
+# Mass Effect
+masseffect.com
+masseffectarchives.com
+
+# Mirror's Edge
+eamirrorsedge.com
+mirrorsedge.com
+mirrorsedge.jp
+mirrorsedge.net
+mirrorsedge2.com
+mirrorsedge2d.com
+
+# Need For Speed
+blackboxgames.com
+eablackbox.com
+needforspeed.com
+needforspeedboost.com
+needforspeeddriftkings.com
+needforspeedeliminator.com
+needforspeedlightning.com
+needforspeedoverdrive.com
+needforspeedproven.com
+needforspeedredline.com
+needforspeedshowdown.com
+needforspeedstreetkings.com
+needforspeedtakedown.com
+needforspeedtherun.com
+needforspeedtimeattack.com
+needforspeedundergroundeast.com
+nfsworld.com
+teamneedforspeed.com
+
+# Plants VS Zombies
+plantsvszombies2.com
+pvzgw2.com
+pvzheroes.com
+
+# Sea of Solitude
+seaofsolitude.com
+
+# Simcity
+simcity-buildit.com
+simcity.com
+
+# Skate
+skate2.com
+
+# Spearhead
+spearhead.kr
+
+# Star Wars
+starwarsfallenorder.com
+starwarsjedifallenorder.com
+starwarstheoldrepublic.com
+swjedifallenorder.com
+swjfo.com
+swtor.com
+swtor.net
+
+# The Sims
+mysims.com
+thesims.com
+thesims3.com
+thesims4.com
+thesimssocial.com
+
+# Titan Fall
+titanfall.com
+
+# Ultima Online
+mythicentertainment.com
+mythicentertainment.net
+mythicgames.com
+ultimaonline.com
+uo.com
+uoherald.com
+
+# XDS
+xdsummit.com
+
+ea.tt.omtrdc.net
+eaassets-a.akamaihd.net

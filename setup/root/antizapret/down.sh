@@ -1,0 +1,227 @@
+#!/bin/bash
+exec 2>/dev/null
+
+cd /root/antizapret
+
+source setup
+
+if [[ -z "$DEFAULT_INTERFACE" ]]; then
+	DEFAULT_INTERFACE="$(ip route get 1.2.3.4 2>/dev/null | grep -oP 'dev \K\S+')"
+	if [[ -z "$DEFAULT_INTERFACE" ]]; then
+		echo 'Default network interface not found!'
+		exit 1
+	fi
+	DEFAULT_IP="$(ip route get 1.2.3.4 2>/dev/null | grep -oP 'src \K\S+')"
+	if [[ -z "$DEFAULT_IP" ]]; then
+		echo 'Default IPv4 address not found!'
+		exit 2
+	fi
+fi
+
+# Диапазоны IPv6-адресов
+ANTIZAPRET_NET6="${ANTIZAPRET_NET6:-fd29::/48}"
+VPN_NET6="${VPN_NET6:-fd28::/48}"
+CLIENT_NET6="${CLIENT_NET6:-fd28::/47}"
+FAKE_NET6="${FAKE_NET6:-fd30::/32}"
+
+if [[ -z "$DEFAULT_IP6" ]]; then
+	DEFAULT_IP6="$(ip -6 route get 2606:4700:4700::1111 2>/dev/null | grep -oP 'src \K\S+')"
+fi
+
+if [[ -z "$ANTIZAPRET_OUT_INTERFACE" ]]; then
+	ANTIZAPRET_OUT_INTERFACE=$DEFAULT_INTERFACE
+	if [[ -z "$ANTIZAPRET_OUT_IP" ]]; then
+		ANTIZAPRET_OUT_IP=$DEFAULT_IP
+	fi
+	if [[ -z "$ANTIZAPRET_OUT_IP6" ]]; then
+		ANTIZAPRET_OUT_IP6=$DEFAULT_IP6
+	fi
+fi
+if [[ -z "$VPN_OUT_INTERFACE" ]]; then
+	VPN_OUT_INTERFACE=$DEFAULT_INTERFACE
+	if [[ -z "$VPN_OUT_IP" ]]; then
+		VPN_OUT_IP=$DEFAULT_IP
+	fi
+	if [[ -z "$VPN_OUT_IP6" ]]; then
+		VPN_OUT_IP6=$DEFAULT_IP6
+	fi
+fi
+
+[[ "$ALTERNATIVE_CLIENT_IP" == 'y' ]] && IP="${CLIENT_IP:-172}" || IP=10
+[[ "$ALTERNATIVE_FAKE_IP" == 'y' ]] && FAKE_IP="${FAKE_IP:-198.18}" || FAKE_IP="$IP.30"
+
+ANTIZAPRET_WARP_INTERFACE=warp-antizapret
+ANTIZAPRET_WARP_PATH="/etc/wireguard/$ANTIZAPRET_WARP_INTERFACE.conf"
+[[ -z "$ANTIZAPRET_WARP_ADDRESS" ]] && ANTIZAPRET_WARP_ADDRESS=$(awk -F'= ' '/^Address/{print $2; exit}' "$ANTIZAPRET_WARP_PATH")
+ANTIZAPRET_WARP_IP="${ANTIZAPRET_WARP_ADDRESS%%/*}"
+[[ -z "$ANTIZAPRET_WARP_ADDRESS6" ]] && ANTIZAPRET_WARP_ADDRESS6=$(echo "$ANTIZAPRET_WARP_ADDRESS" | tr ',' '\n' | grep ':' | head -n 1)
+ANTIZAPRET_WARP_IP6="$(echo "${ANTIZAPRET_WARP_ADDRESS6%%/*}" | tr -d ' ')"
+
+VPN_WARP_INTERFACE=warp-vpn
+VPN_WARP_PATH="/etc/wireguard/$VPN_WARP_INTERFACE.conf"
+[[ -z "$VPN_WARP_ADDRESS" ]] && VPN_WARP_ADDRESS=$(awk -F'= ' '/^Address/{print $2; exit}' "$VPN_WARP_PATH")
+VPN_WARP_IP="${VPN_WARP_ADDRESS%%/*}"
+[[ -z "$VPN_WARP_ADDRESS6" ]] && VPN_WARP_ADDRESS6=$(echo "$VPN_WARP_ADDRESS" | tr ',' '\n' | grep ':' | head -n 1)
+VPN_WARP_IP6="$(echo "${VPN_WARP_ADDRESS6%%/*}" | tr -d ' ')"
+
+# filter
+# INPUT connection tracking
+iptables -w -D INPUT -m conntrack --ctstate INVALID -j DROP
+ip6tables -w -D INPUT -m conntrack --ctstate INVALID -j DROP
+# FORWARD connection tracking
+iptables -w -D FORWARD -m conntrack --ctstate INVALID -j DROP
+ip6tables -w -D FORWARD -m conntrack --ctstate INVALID -j DROP
+# OUTPUT connection tracking
+iptables -w -D OUTPUT -m conntrack --ctstate INVALID -j DROP
+ip6tables -w -D OUTPUT -m conntrack --ctstate INVALID -j DROP
+# Torrent guard
+iptables -w -D FORWARD -s $IP.28.0.0/16 -p tcp -m string --string 'GET ' --algo kmp --to 100 -m string --string 'info_hash=' --algo bm -m string --string 'peer_id=' --algo bm -m string --string 'port=' --algo bm -j SET --add-set antizapret-torrent src --exist
+iptables -w -D FORWARD -s $IP.28.0.0/16 -p udp -m string --string 'BitTorrent protocol' --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
+iptables -w -D FORWARD -s $IP.28.0.0/16 -p udp -m string --string 'd1:ad2:id20:' --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
+iptables -w -D FORWARD -s $IP.28.0.0/16 -m set --match-set antizapret-torrent src -j DROP
+ip6tables -w -D FORWARD -s $VPN_NET6 -p tcp -m string --string 'GET ' --algo kmp --to 100 -m string --string 'info_hash=' --algo bm -m string --string 'peer_id=' --algo bm -m string --string 'port=' --algo bm -j SET --add-set antizapret-torrent6 src --exist
+ip6tables -w -D FORWARD -s $VPN_NET6 -p udp -m string --string 'BitTorrent protocol' --algo kmp --to 100 -j SET --add-set antizapret-torrent6 src --exist
+ip6tables -w -D FORWARD -s $VPN_NET6 -p udp -m string --string 'd1:ad2:id20:' --algo kmp --to 100 -j SET --add-set antizapret-torrent6 src --exist
+ip6tables -w -D FORWARD -s $VPN_NET6 -m set --match-set antizapret-torrent6 src -j DROP
+# Restrict forwarding
+iptables -w -D FORWARD -s $IP.29.0.0/16 -m connmark --mark 0x1 -m set ! --match-set antizapret-forward dst -j DROP
+ip6tables -w -D FORWARD -s $ANTIZAPRET_NET6 -m connmark --mark 0x1 -m set ! --match-set antizapret-forward6 dst -j DROP
+# Drop forwarding
+iptables -w -D FORWARD -s $IP.28.0.0/15 -m set --match-set antizapret-drop dst -j DROP
+ip6tables -w -D FORWARD -s $CLIENT_NET6 -m set --match-set antizapret-drop6 dst -j DROP
+# Client and server isolation
+iptables -w -D FORWARD ! -i $ANTIZAPRET_OUT_INTERFACE -d $IP.28.0.0/15 -j DROP
+iptables -w -D FORWARD ! -i $ANTIZAPRET_OUT_INTERFACE -d $IP.29.0.0/16 -j DROP
+iptables -w -D FORWARD ! -i $ANTIZAPRET_WARP_INTERFACE -d $IP.29.0.0/16 -j DROP
+iptables -w -D FORWARD ! -i $VPN_OUT_INTERFACE -d $IP.28.0.0/16 -j DROP
+iptables -w -D FORWARD ! -i $VPN_WARP_INTERFACE -d $IP.28.0.0/16 -j DROP
+iptables -w -D INPUT -s $IP.28.0.0/15 -p tcp ! --dport 53 -j DROP
+iptables -w -D INPUT -s $IP.28.0.0/15 -p udp ! --dport 53 -j DROP
+ip6tables -w -D FORWARD ! -i $ANTIZAPRET_OUT_INTERFACE -d $CLIENT_NET6 -j DROP
+ip6tables -w -D FORWARD ! -i $ANTIZAPRET_OUT_INTERFACE -d $ANTIZAPRET_NET6 -j DROP
+ip6tables -w -D FORWARD ! -i $ANTIZAPRET_WARP_INTERFACE -d $ANTIZAPRET_NET6 -j DROP
+ip6tables -w -D FORWARD ! -i $VPN_OUT_INTERFACE -d $VPN_NET6 -j DROP
+ip6tables -w -D FORWARD ! -i $VPN_WARP_INTERFACE -d $VPN_NET6 -j DROP
+ip6tables -w -D INPUT -s $CLIENT_NET6 -p tcp ! --dport 53 -j DROP
+ip6tables -w -D INPUT -s $CLIENT_NET6 -p udp ! --dport 53 -j DROP
+# SSH protection
+iptables -w -D INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m hashlimit --hashlimit-above 5/hour --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-srcmask 24 --hashlimit-name antizapret-ssh --hashlimit-htable-expire 60000 -j DROP
+ip6tables -w -D INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m hashlimit --hashlimit-above 5/hour --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-srcmask 64 --hashlimit-name antizapret-ssh6 --hashlimit-htable-expire 60000 -j DROP
+# Attack protection
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -m set --match-set antizapret-allow src -j ACCEPT
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -m set ! --match-set antizapret-watch src,dst -m hashlimit --hashlimit-above 20/hour --hashlimit-burst 20 --hashlimit-mode srcip --hashlimit-srcmask 24 --hashlimit-name antizapret-scan --hashlimit-htable-expire 600000 -j SET --add-set antizapret-block src --exist
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -m hashlimit --hashlimit-above 100000/hour --hashlimit-burst 100000 --hashlimit-mode srcip --hashlimit-name antizapret-ddos --hashlimit-htable-expire 600000 -j SET --add-set antizapret-block src --exist
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -m set --match-set antizapret-block src -j DROP
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -j SET --add-set antizapret-watch src,dst --exist
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -m set --match-set antizapret-allow6 src -j ACCEPT
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -m set ! --match-set antizapret-watch6 src,dst -m hashlimit --hashlimit-above 20/hour --hashlimit-burst 20 --hashlimit-mode srcip --hashlimit-srcmask 64 --hashlimit-name antizapret-scan6 --hashlimit-htable-expire 600000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -m hashlimit --hashlimit-above 100000/hour --hashlimit-burst 100000 --hashlimit-mode srcip --hashlimit-name antizapret-ddos6 --hashlimit-htable-expire 600000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -m set --match-set antizapret-block6 src -j DROP
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -m conntrack --ctstate NEW -j SET --add-set antizapret-watch6 src,dst --exist
+# Scan protection
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -p icmp --icmp-type echo-request -j DROP
+iptables -w -D OUTPUT -o $DEFAULT_INTERFACE -p tcp --tcp-flags RST RST -j DROP
+iptables -w -D OUTPUT -o $DEFAULT_INTERFACE -p icmp --icmp-type port-unreachable -j DROP
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -p icmpv6 --icmpv6-type echo-request -j DROP
+ip6tables -w -D OUTPUT -o $DEFAULT_INTERFACE -p tcp --tcp-flags RST RST -j DROP
+ip6tables -w -D OUTPUT -o $DEFAULT_INTERFACE -p icmpv6 --icmpv6-type port-unreachable -j DROP
+# Deny input
+iptables -w -D INPUT -i $DEFAULT_INTERFACE -m set --match-set antizapret-deny src -j DROP
+ip6tables -w -D INPUT -i $DEFAULT_INTERFACE -m set --match-set antizapret-deny6 src -j DROP
+
+# mangle
+# Clamp TCP MSS
+iptables -w -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+iptables -w -t mangle -D OUTPUT ! -o lo -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+ip6tables -w -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+ip6tables -w -t mangle -D OUTPUT ! -o lo -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+
+# raw
+# NOTRACK loopback
+iptables -w -t raw -D PREROUTING -i lo -j NOTRACK
+iptables -w -t raw -D OUTPUT -o lo -j NOTRACK
+ip6tables -w -t raw -D PREROUTING -i lo -j NOTRACK
+ip6tables -w -t raw -D OUTPUT -o lo -j NOTRACK
+
+# nat
+# OpenVPN TCP port redirection for backup connections
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 80 -j REDIRECT --to-ports 50080
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 443 -j REDIRECT --to-ports 50443
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 504 -j REDIRECT --to-ports 50443
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 508 -j REDIRECT --to-ports 50080
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 80 -j REDIRECT --to-ports 50080
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 443 -j REDIRECT --to-ports 50443
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 504 -j REDIRECT --to-ports 50443
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p tcp --dport 508 -j REDIRECT --to-ports 50080
+# OpenVPN UDP port redirection for backup connections
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 80 -j REDIRECT --to-ports 50080
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 443 -j REDIRECT --to-ports 50443
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 504 -j REDIRECT --to-ports 50443
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 508 -j REDIRECT --to-ports 50080
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 80 -j REDIRECT --to-ports 50080
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 443 -j REDIRECT --to-ports 50443
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 504 -j REDIRECT --to-ports 50443
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 508 -j REDIRECT --to-ports 50080
+# WireGuard/AmneziaWG port redirection for backup connections
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 540 -j REDIRECT --to-ports 51443
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 580 -j REDIRECT --to-ports 51080
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 540 -j REDIRECT --to-ports 51443
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 580 -j REDIRECT --to-ports 51080
+# AmneziaWG redirection ports to WireGuard
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 52080 -j REDIRECT --to-ports 51080
+iptables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 52443 -j REDIRECT --to-ports 51443
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 52080 -j REDIRECT --to-ports 51080
+ip6tables -w -t nat -D PREROUTING -i $DEFAULT_INTERFACE -p udp --dport 52443 -j REDIRECT --to-ports 51443
+# AntiZapret DNS redirection to Knot Resolver
+iptables -w -t nat -D PREROUTING -s $IP.29.0.0/16 -p udp --dport 53 -j DNAT --to-destination 127.1.1.1
+iptables -w -t nat -D PREROUTING -s $IP.29.0.0/16 -p tcp --dport 53 -j DNAT --to-destination 127.1.1.1
+# VPN DNS redirection to Knot Resolver
+iptables -w -t nat -D PREROUTING -s $IP.28.0.0/16 -p udp --dport 53 -j DNAT --to-destination 127.2.2.2
+iptables -w -t nat -D PREROUTING -s $IP.28.0.0/16 -p tcp --dport 53 -j DNAT --to-destination 127.2.2.2
+# Restrict forwarding
+iptables -w -t nat -D PREROUTING -s $IP.29.0.0/16 ! -d $FAKE_IP.0.0/15 -j CONNMARK --set-mark 0x1
+ip6tables -w -t nat -D PREROUTING -s $ANTIZAPRET_NET6 ! -d $FAKE_NET6 -j CONNMARK --set-mark 0x1
+# Mapping fake IP to real IP
+iptables -w -t nat -D PREROUTING -s $IP.29.0.0/16 -d $FAKE_IP.0.0/15 -j ANTIZAPRET-MAPPING
+ip6tables -w -t nat -D PREROUTING -s $ANTIZAPRET_NET6 -d $FAKE_NET6 -j ANTIZAPRET-MAPPING
+# SNAT/MASQUERADE VPN
+iptables -w -t nat -D POSTROUTING -s $IP.28.0.0/15 -o $ANTIZAPRET_OUT_INTERFACE -j MASQUERADE
+iptables -w -t nat -D POSTROUTING -s $IP.28.0.0/15 -o $ANTIZAPRET_OUT_INTERFACE -j SNAT --to-source $ANTIZAPRET_OUT_IP
+iptables -w -t nat -D POSTROUTING -s $IP.29.0.0/16 -o $ANTIZAPRET_OUT_INTERFACE -j MASQUERADE
+iptables -w -t nat -D POSTROUTING -s $IP.29.0.0/16 -o $ANTIZAPRET_OUT_INTERFACE -j SNAT --to-source $ANTIZAPRET_OUT_IP
+iptables -w -t nat -D POSTROUTING -s $IP.29.0.0/16 -o $ANTIZAPRET_WARP_INTERFACE -j MASQUERADE
+iptables -w -t nat -D POSTROUTING -s $IP.29.0.0/16 -o $ANTIZAPRET_WARP_INTERFACE -j SNAT --to-source $ANTIZAPRET_WARP_IP
+iptables -w -t nat -D POSTROUTING -s $IP.28.0.0/16 -o $VPN_OUT_INTERFACE -j MASQUERADE
+iptables -w -t nat -D POSTROUTING -s $IP.28.0.0/16 -o $VPN_OUT_INTERFACE -j SNAT --to-source $VPN_OUT_IP
+iptables -w -t nat -D POSTROUTING -s $IP.28.0.0/16 -o $VPN_WARP_INTERFACE -j MASQUERADE
+iptables -w -t nat -D POSTROUTING -s $IP.28.0.0/16 -o $VPN_WARP_INTERFACE -j SNAT --to-source $VPN_WARP_IP
+# SNAT/MASQUERADE VPN IPv6
+ip6tables -w -t nat -D POSTROUTING -s $CLIENT_NET6 -o $ANTIZAPRET_OUT_INTERFACE -j MASQUERADE
+ip6tables -w -t nat -D POSTROUTING -s $CLIENT_NET6 -o $ANTIZAPRET_OUT_INTERFACE -j SNAT --to-source $ANTIZAPRET_OUT_IP6
+ip6tables -w -t nat -D POSTROUTING -s $ANTIZAPRET_NET6 -o $ANTIZAPRET_OUT_INTERFACE -j MASQUERADE
+ip6tables -w -t nat -D POSTROUTING -s $ANTIZAPRET_NET6 -o $ANTIZAPRET_OUT_INTERFACE -j SNAT --to-source $ANTIZAPRET_OUT_IP6
+ip6tables -w -t nat -D POSTROUTING -s $ANTIZAPRET_NET6 -o $ANTIZAPRET_WARP_INTERFACE -j MASQUERADE
+ip6tables -w -t nat -D POSTROUTING -s $ANTIZAPRET_NET6 -o $ANTIZAPRET_WARP_INTERFACE -j SNAT --to-source $ANTIZAPRET_WARP_IP6
+ip6tables -w -t nat -D POSTROUTING -s $VPN_NET6 -o $VPN_OUT_INTERFACE -j MASQUERADE
+ip6tables -w -t nat -D POSTROUTING -s $VPN_NET6 -o $VPN_OUT_INTERFACE -j SNAT --to-source $VPN_OUT_IP6
+ip6tables -w -t nat -D POSTROUTING -s $VPN_NET6 -o $VPN_WARP_INTERFACE -j MASQUERADE
+ip6tables -w -t nat -D POSTROUTING -s $VPN_NET6 -o $VPN_WARP_INTERFACE -j SNAT --to-source $VPN_WARP_IP6
+
+# WARP AntiZapret
+if [[ -f $ANTIZAPRET_WARP_PATH ]]; then
+	wg-quick down $ANTIZAPRET_WARP_PATH
+fi
+if ip link show dev $ANTIZAPRET_WARP_INTERFACE &>/dev/null; then
+	ip link delete dev $ANTIZAPRET_WARP_INTERFACE
+fi
+
+# WARP VPN
+if [[ -f $VPN_WARP_PATH ]]; then
+	wg-quick down $VPN_WARP_PATH
+fi
+if ip link show dev $VPN_WARP_INTERFACE &>/dev/null; then
+	ip link delete dev $VPN_WARP_INTERFACE
+fi
+
+./custom-down.sh
+exit 0

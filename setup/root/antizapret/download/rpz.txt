@@ -1,0 +1,108 @@
+; НЕ РЕДАКТИРУЙТЕ ЭТОТ ФАЙЛ!
+cloudflare-dns.com CNAME .
+*.cloudflare-dns.com CNAME .
+dns.cloudflare.com CNAME .
+*.dns.cloudflare.com CNAME .
+dns.quad9.net CNAME .
+*.dns.quad9.net CNAME .
+dns9.quad9.net CNAME .
+*.dns9.quad9.net CNAME .
+dns10.quad9.net CNAME .
+*.dns10.quad9.net CNAME .
+dns11.quad9.net CNAME .
+*.dns11.quad9.net CNAME .
+dns.quad12.net CNAME .
+*.dns.quad12.net CNAME .
+dns.quad13.net CNAME .
+*.dns.quad13.net CNAME .
+dns.nextdns.io CNAME .
+*.dns.nextdns.io CNAME .
+dns.google.com CNAME .
+*.dns.google.com CNAME .
+dns.google CNAME .
+*.dns.google CNAME .
+dns.opendns.com CNAME .
+*.dns.opendns.com CNAME .
+doh.opendns.com CNAME .
+*.doh.opendns.com CNAME .
+familyshield.opendns.com CNAME .
+*.familyshield.opendns.com CNAME .
+sandbox.opendns.com CNAME .
+*.sandbox.opendns.com CNAME .
+doh.cleanbrowsing.org CNAME .
+*.doh.cleanbrowsing.org CNAME .
+family-filter-dns.cleanbrowsing.org CNAME .
+*.family-filter-dns.cleanbrowsing.org CNAME .
+adult-filter-dns.cleanbrowsing.org CNAME .
+*.adult-filter-dns.cleanbrowsing.org CNAME .
+security-filter-dns.cleanbrowsing.org CNAME .
+*.security-filter-dns.cleanbrowsing.org CNAME .
+dot.dns.yandex.net CNAME .
+*.dot.dns.yandex.net CNAME .
+dns.adguard-dns.com CNAME .
+*.dns.adguard-dns.com CNAME .
+unfiltered.adguard-dns.com CNAME .
+*.unfiltered.adguard-dns.com CNAME .
+family.adguard-dns.com CNAME .
+*.family.adguard-dns.com CNAME .
+dns.alidns.com CNAME .
+*.dns.alidns.com CNAME .
+doh.skydns.ru CNAME .
+*.doh.skydns.ru CNAME .
+freedns.controld.com CNAME .
+*.freedns.controld.com CNAME .
+
+dnsbl.manitu.net CNAME .
+*.dnsbl.manitu.net CNAME .
+
+mcc255.pub.3gppnetwork.org CNAME .
+*.mcc255.pub.3gppnetwork.org CNAME .
+
+*.rarbg.me CNAME .
+*.rarbg.com CNAME .
+tracker.publicbt.com CNAME .
+tracker.trackerfix.com CNAME .
+public.publictracker.xyz CNAME .
+tracker.lelux.fi CNAME .
+tracker.imgoingto.icu CNAME .
+opentracker.i2p.rocks CNAME .
+retracker.lanta.me CNAME .
+tracker.token.ro CNAME .
+retracker.lanta-net.ru CNAME .
+tracker.tfile.co CNAME .
+tracker.openbittorrent.com A 52.223.13.41
+
+; https://habr.com/ru/articles/1006666
+redirector.googlevideo.com CNAME .
+checkip.amazonaws.com CNAME .
+icanhazip.com CNAME .
+*.icanhazip.com CNAME .
+ifconfig.co CNAME .
+*.ifconfig.co CNAME .
+ipify.org CNAME .
+*.ipify.org CNAME .
+myip.com CNAME .
+*.myip.com CNAME .
+ipapi.co CNAME .
+*.ipapi.co CNAME .
+eth0.me CNAME .
+*.eth0.me CNAME .
+ip.sb CNAME .
+*.ip.sb CNAME .
+
+; https://habr.com/ru/articles/1000792
+telega.info CNAME .
+*.telega.info CNAME .
+
+; https://habr.com/ru/articles/1036222
+vk-analytics.ru CNAME .
+*.vk-analytics.ru CNAME .
+trace-flow.ru CNAME .
+*.trace-flow.ru CNAME .
+apptracer.ru CNAME .
+*.apptracer.ru CNAME .
+
+; https://habr.com/ru/articles/1046710
+reef.vk-cdn.net CNAME .
+*.reef.vk-cdn.net CNAME .
+; НЕ РЕДАКТИРУЙТЕ ЭТОТ ФАЙЛ!

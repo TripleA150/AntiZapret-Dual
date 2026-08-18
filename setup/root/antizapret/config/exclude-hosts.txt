@@ -1,0 +1,78 @@
+# Исключение доменов из маршрутизации через AntiZapret VPN
+# Исключить можно любые домены, а не только добавленные в download/include-hosts.txt
+#
+# Формат записи: example.com
+# Где:
+#   example.com - доменное имя в кодировке ASCII или Punycode
+#
+# Примеры записи:
+#   subdomain.example.com  - исключение домена третьего уровня subdomain.example.com и всех его поддоменов
+#   example.com            - исключение домена второго уровня example.com и всех его поддоменов
+#   com                    - исключение домена верхнего уровня com и всех его поддоменов
+#   xn--80aswg.xn--p1ai    - исключение домена второго уровня сайт.рф и всех его поддоменов (кодировка Punycode)
+#
+# Строки начинающиеся с # это комментарии и они не обрабатываются
+#
+
+
+plex.tv
+clouddy.online
+warframe.com
+
+# Riot Games
+historyofdota.com
+historyofdota.net
+historyofdota.org
+instituteofwar.org
+molesports.com
+rgpub.io
+riot-games.com
+riot.com
+riot.net
+riotcdn.net
+riotgames.co.kr
+riotgames.com
+riotgames.info
+riotgames.jp
+riotgames.net
+riotgames.tv
+riotpin.com
+riotpoints.com
+rstatic.net
+supremacy.com
+supremacy.net
+championshipseriesleague.com
+lcsmerch.com
+leaguehighschool.com
+leagueoflegends.ca
+leagueoflegends.com
+leagueoflegends.info
+leagueoflegends.kr
+leagueoflegends.net
+leagueoflegends.org
+leagueoflegendsscripts.com
+leaguesharp.info
+leaguoflegends.com
+learnwithleague.com
+lol-europe.com
+lolclub.org
+lolespor.com
+lolesports.com
+lolfanart.net
+lolpcs.com
+lolshop.co.kr
+lolstatic.com
+lolusercontent.com
+pvp.net
+pvp.tv
+ulol.com
+lolstatic-a.akamaihd.net
+playvalorant.com
+riotforgegames.com
+ruinedking.com
+convrgencegame.com
+
+# Escape from Tarkov
+tarkov.com
+eft-store.com
+escapefromtarkov.com
