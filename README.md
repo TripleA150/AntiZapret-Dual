@@ -1,5 +1,5 @@
 ```
-bash <(wget -qO- --no-hsts --inet4-only https://raw.githubusercontent.com/TripleA150/AntiZapret-VPN/patch-1/setup.sh)
+bash <(wget -qO- --no-hsts --inet4-only https://raw.githubusercontent.com/TripleA150/AntiZapret-Dual/main/setup.sh)
 ```
 
 ## Поддержка IPv6
